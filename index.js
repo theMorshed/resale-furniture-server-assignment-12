@@ -15,7 +15,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-async function run () {
+async function run() {
     try {
         const furnitureCollection = client.db('resaleFurnitures').collection('furnitures');
         const usersCollection = client.db('resaleFurnitures').collection('users');
@@ -25,8 +25,16 @@ async function run () {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         });
+
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ role: user?.role });
+        })
+
     }
-    finally{
+    finally {
 
     }
 }
