@@ -31,8 +31,20 @@ async function run() {
             const query = { email }
             const user = await usersCollection.findOne(query);
             res.send({ role: user?.role });
-        })
+        });
 
+        app.post('/addfurniture', async (req, res) => {
+            const furniture = req.body;
+            const result = await furnitureCollection.insertOne(furniture);
+            res.send(result);
+        });
+
+        app.get('/category/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {category: id};
+            const result = await furnitureCollection.find(query).toArray();
+            res.send(result);
+        });
     }
     finally {
 
