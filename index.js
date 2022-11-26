@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // middleware
 app.use(cors());
@@ -40,16 +40,43 @@ async function run() {
             res.send(result);
         });
 
+        app.delete('/deletefurniture/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await furnitureCollection.deleteOne(filter);
+            res.send(result);
+        });
+
+        app.put('/verifySeller/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    isVerified: true
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
+        // app.delete('/doctors/:id', verifyJWT, verifyAdmin, async (req, res) => {
+        //     const id = req.params.id;
+        //     const filter = { _id: ObjectId(id) };
+        //     const result = await doctorsCollection.deleteOne(filter);
+        //     res.send(result);
+        // })
+
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {category: id};
+            const query = { category: id };
             const result = await furnitureCollection.find(query).toArray();
             res.send(result);
         });
 
-        app.get('/sellerproducts/:email', async(req, res) => {
+        app.get('/sellerproducts/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email};
+            const query = { email };
             const result = await furnitureCollection.find(query).toArray();
             res.send(result);
         });
@@ -59,6 +86,19 @@ async function run() {
             const result = await usersCollection.find(query).toArray();
             res.send(result);
         });
+
+        // temporary to update price field on appointment options
+        // app.get('/addStatus', async (req, res) => {
+        //     const filter = {}
+        //     const options = { upsert: true }
+        //     const updatedDoc = {
+        //         $set: {
+        //             status: 'available'
+        //         }
+        //     }
+        //     const result = await furnitureCollection.updateMany(filter, updatedDoc, options);
+        //     res.send(result);
+        // })
 
         app.get('/allbuyers', async (req, res) => {
             const query = { role: 'buyer' };
@@ -74,11 +114,11 @@ async function run() {
 
         app.get('/dashboard/orders/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email};
+            const query = { email };
             const result = await ordersCollection.find(query).toArray();
             res.send(result);
         });
-        
+
     }
     finally {
 
