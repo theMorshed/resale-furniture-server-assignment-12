@@ -51,7 +51,19 @@ async function run() {
             const query = {email};
             const result = await furnitureCollection.find(query).toArray();
             res.send(result);
-        })
+        });
+
+        app.get('/allsellers', async (req, res) => {
+            const query = { role: 'seller' };
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.get('/allbuyers', async (req, res) => {
+            const query = { role: 'buyer' };
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
     }
     finally {
 
