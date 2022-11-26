@@ -45,6 +45,13 @@ async function run() {
             const result = await furnitureCollection.find(query).toArray();
             res.send(result);
         });
+
+        app.get('/sellerproducts/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {email};
+            const result = await furnitureCollection.find(query).toArray();
+            res.send(result);
+        })
     }
     finally {
 
