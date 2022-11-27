@@ -33,7 +33,6 @@ function verifyJWT(req, res, next) {
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.zkjorm4.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-
 async function run() {
     try {
         const furnitureCollection = client.db('resaleFurnitures').collection('furnitures');
@@ -51,21 +50,13 @@ async function run() {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.send(result);
-        });
-
-        app.get('/user/role/:email', async (req, res) => {
+        });  
+        
+        app.get('/userRole/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
             const user = await usersCollection.findOne(query);
-            res.send({ role: user?.role });
-        });
-
-        // this is not using still now
-        app.get('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const query = {email};
-            const result = await usersCollection.findOne(query);
-            res.send(result);
+            res.send(user);
         });
 
         app.post('/addfurniture', async (req, res) => {
@@ -83,7 +74,7 @@ async function run() {
 
         app.put('/verifySeller/:id', async (req, res) => {
             const id = req.params.id;
-            const filter = {_id: ObjectId(id)};
+            const filter = { _id: ObjectId(id) };
             const options = { upsert: true }
             const updatedDoc = {
                 $set: {
@@ -93,13 +84,6 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
         });
-
-        // app.delete('/doctors/:id', verifyJWT, verifyAdmin, async (req, res) => {
-        //     const id = req.params.id;
-        //     const filter = { _id: ObjectId(id) };
-        //     const result = await doctorsCollection.deleteOne(filter);
-        //     res.send(result);
-        // })
 
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
@@ -134,19 +118,6 @@ async function run() {
             const result = await usersCollection.deleteOne(filter);
             res.send(result);
         });
-
-        // temporary to update price field on appointment options
-        // app.get('/addStatus', async (req, res) => {
-        //     const filter = {}
-        //     const options = { upsert: true }
-        //     const updatedDoc = {
-        //         $set: {
-        //             status: 'available'
-        //         }
-        //     }
-        //     const result = await furnitureCollection.updateMany(filter, updatedDoc, options);
-        //     res.send(result);
-        // })
 
         app.get('/allbuyers', async (req, res) => {
             const query = { role: 'buyer' };
@@ -184,11 +155,10 @@ async function run() {
 
     }
 }
-run().catch(console.dir);
-
+run().catch(err => console.error(err));
 
 app.get('/', (req, res) => {
-    res.send('All resale services here.');
+    res.send('Resale furniture server running successfully.');
 });
 
 app.listen(port, () => {
