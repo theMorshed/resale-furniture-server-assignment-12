@@ -85,6 +85,19 @@ async function run() {
             res.send(result);
         });
 
+        app.put('/advertisefurniture/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    advertised: true
+                }
+            }
+            const result = await furnitureCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
             const query = { category: id };
@@ -99,9 +112,22 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/advertisedFurniture', async (req, res) => {
+            const query = { advertised: true };
+            const result = await furnitureCollection.find(query).toArray();
+            res.send(result);
+        });
+
         app.get('/allsellers', async (req, res) => {
             const query = { role: 'seller' };
             const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.get('/verifySeller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = {email};
+            const result = await usersCollection.findOne(query);
             res.send(result);
         });
 
