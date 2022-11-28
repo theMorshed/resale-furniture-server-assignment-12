@@ -219,7 +219,7 @@ async function run() {
                     verifiedSeller: true
                 }
             }
-            const result = await furnitureCollection.updateOne(filter, updatedDoc, options);
+            const result = await furnitureCollection.updateMany(filter, updatedDoc, options);
             res.send(result);
         });
 
