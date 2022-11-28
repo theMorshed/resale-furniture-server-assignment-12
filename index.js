@@ -49,6 +49,7 @@ async function run() {
             res.send({ token });
         });
 
+        // stripe create payment intent api
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
             const price = booking.price;
@@ -66,6 +67,7 @@ async function run() {
             });
         });
 
+        // stripe payments api
         app.post('/payments', async (req, res) => {
             const payment = req.body;
             const result = await paymentsCollection.insertOne(payment);
@@ -81,6 +83,7 @@ async function run() {
             res.send(result);
         });
 
+        // update furniture status after sale api
         app.put('/updateFurnitureStatus/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -94,6 +97,7 @@ async function run() {
             res.send(result);
         });
 
+        // update order status after payment
         app.put('/updateOrderStatus/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -107,6 +111,7 @@ async function run() {
             res.send(result);
         });
 
+        // get a single furniture with id
         app.get('/furniture/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -114,6 +119,7 @@ async function run() {
             res.send(result);
         });
 
+        // get a single order
         app.get('/order/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -121,24 +127,28 @@ async function run() {
             res.send(result);
         })
 
+        // save user into mongodb
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.send(result);
         });
 
+        // user report furniture by this api
         app.post('/reportFurniture', async (req, res) => {
             const furniture = req.body;
             const result = await reportsCollection.insertOne(furniture);
             res.send(result);
         });
 
+        // get all reported furniture
         app.get('/reportedFurniture', async (req, res) => {
             const query = {};
             const result = await reportsCollection.find(query).toArray();
             res.send(result);
         });
 
+        // delete reported furniture by admin from mongodb
         app.delete('/deleteReported/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -146,6 +156,7 @@ async function run() {
             res.send(result);
         });
 
+        // delete reporte furniture from ui of admin
         app.delete('/deleteReportedFromReports/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { product_id: id };
@@ -153,6 +164,7 @@ async function run() {
             res.send(result);
         });
 
+        // get user role for verification
         app.get('/userRole/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
@@ -160,12 +172,14 @@ async function run() {
             res.send(user);
         });
 
+        // add a furniture
         app.post('/addfurniture', async (req, res) => {
             const furniture = req.body;
             const result = await furnitureCollection.insertOne(furniture);
             res.send(result);
         });
 
+        // delete a specific furniture
         app.delete('/deletefurniture/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -173,6 +187,15 @@ async function run() {
             res.send(result);
         });
 
+        // delete seller furniture when seller is deleted by admin
+        app.delete('/deleteSellerFurniture/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await furnitureCollection.deleteMany(filter);
+            res.send(result);
+        });
+
+        // verify seller by admin
         app.put('/verifySeller/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -186,7 +209,13 @@ async function run() {
             res.send(result);
         });
 
-        app.put('/advertisefurniture/:id', async (req, res) => {
+        // seller advertise furniture by this api
+        app.put('/advertisefurniture/:id', verifyJWT, async (req, res) => {
+            const decoded = req.decoded;
+            if (decoded.email !== req.params.email) {
+                res.status(403).send({ message: 'unauthorized access' })
+            }
+
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true }
@@ -199,6 +228,7 @@ async function run() {
             res.send(result);
         });
 
+        // get all categorized furniture for display
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
             const query = { category: id };
@@ -206,6 +236,7 @@ async function run() {
             res.send(result);
         });
 
+        // get all furniture of a specific seller
         app.get('/sellerproducts/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
@@ -213,18 +244,21 @@ async function run() {
             res.send(result);
         });
 
+        // get all advertised furniture to display
         app.get('/advertisedFurniture', async (req, res) => {
             const query = { advertised: true };
             const result = await furnitureCollection.find(query).toArray();
             res.send(result);
         });
 
+        // get all sellers for admin display
         app.get('/allsellers', async (req, res) => {
             const query = { role: 'seller' };
             const result = await usersCollection.find(query).toArray();
             res.send(result);
         });
 
+        // verify seller by admin
         app.get('/verifySeller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
@@ -232,6 +266,7 @@ async function run() {
             res.send(result);
         });
 
+        // delete a seller by admin
         app.delete('/deleteSeller/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -239,6 +274,7 @@ async function run() {
             res.send(result);
         });
 
+        // delete a buyer or user by admin
         app.delete('/deleteBuyer/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -246,12 +282,19 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/allbuyers', async (req, res) => {
+        // get all buyers in admin route
+        app.get('/allbuyers', verifyJWT, async (req, res) => {
+            const decoded = req.decoded;
+            if (decoded.email !== req.params.email) {
+                res.status(403).send({ message: 'unauthorized access' })
+            }
+
             const query = { role: 'buyer' };
             const result = await usersCollection.find(query).toArray();
             res.send(result);
         });
 
+        // set a order 
         app.post('/orders', verifyJWT, async (req, res) => {
             const decoded = req.decoded;
             if (decoded.email !== req.params.email) {
@@ -263,6 +306,7 @@ async function run() {
             res.send(result);
         });
 
+        // delete an order
         app.delete('/deleteOrder/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -270,7 +314,13 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/dashboard/orders/:email', async (req, res) => {
+        // get all orders of a specific buyer
+        app.get('/dashboard/orders/:email', verifyJWT, async (req, res) => {
+            const decoded = req.decoded;
+            if (decoded.email !== req.params.email) {
+                res.status(403).send({ message: 'unauthorized access' })
+            }
+
             const email = req.params.email;
             const query = { email };
             const result = await ordersCollection.find(query).toArray();
