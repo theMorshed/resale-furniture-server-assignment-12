@@ -297,12 +297,7 @@ async function run() {
         });
 
         // get all buyers in admin route
-        app.get('/allbuyers', verifyJWT, async (req, res) => {
-            const decoded = req.decoded;
-            if (decoded.email !== req.params.email) {
-                res.status(403).send({ message: 'unauthorized access' })
-            }
-
+        app.get('/allbuyers',  async (req, res) => {
             const query = { role: 'buyer' };
             const result = await usersCollection.find(query).toArray();
             res.send(result);
