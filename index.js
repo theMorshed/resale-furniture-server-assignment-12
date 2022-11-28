@@ -209,6 +209,20 @@ async function run() {
             res.send(result);
         });
 
+        // verify seller by in furniture collection
+        app.put('/verifySellerInFurniture/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    verifiedSeller: true
+                }
+            }
+            const result = await furnitureCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
         // seller advertise furniture by this api
         app.put('/advertisefurniture/:id', verifyJWT, async (req, res) => {
             const decoded = req.decoded;
