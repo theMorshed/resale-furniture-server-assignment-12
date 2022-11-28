@@ -5,6 +5,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // middleware
 app.use(cors());
@@ -38,6 +39,8 @@ async function run() {
         const furnitureCollection = client.db('resaleFurnitures').collection('furnitures');
         const usersCollection = client.db('resaleFurnitures').collection('users');
         const ordersCollection = client.db('resaleFurnitures').collection('ordres');
+        const reportsCollection = client.db('resaleFurnitures').collection('reports');
+        const paymentsCollection = client.db('resaleFurnitures').collection('payments');
 
         // get a jwt a token
         app.post('/jwt', (req, res) => {
@@ -46,12 +49,110 @@ async function run() {
             res.send({ token });
         });
 
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    status: 'paid',
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await furnitureCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        });
+
+        app.put('/updateFurnitureStatus/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    status: 'sold'
+                }
+            }
+            const result = await furnitureCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
+        app.put('/updateOrderStatus/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    status: 'paid'
+                }
+            }
+            const result = await ordersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
+        app.get('/furniture/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await furnitureCollection.findOne(query);
+            res.send(result);
+        });
+
+        app.get('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await ordersCollection.findOne(query);
+            res.send(result);
+        })
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.send(result);
-        });  
-        
+        });
+
+        app.post('/reportFurniture', async (req, res) => {
+            const furniture = req.body;
+            const result = await reportsCollection.insertOne(furniture);
+            res.send(result);
+        });
+
+        app.get('/reportedFurniture', async (req, res) => {
+            const query = {};
+            const result = await reportsCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.delete('/deleteReported/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await furnitureCollection.deleteOne(filter);
+            res.send(result);
+        });
+
+        app.delete('/deleteReportedFromReports/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { product_id: id };
+            const result = await reportsCollection.deleteOne(filter);
+            res.send(result);
+        });
+
         app.get('/userRole/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
@@ -126,7 +227,7 @@ async function run() {
 
         app.get('/verifySeller/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email};
+            const query = { email };
             const result = await usersCollection.findOne(query);
             res.send(result);
         });
